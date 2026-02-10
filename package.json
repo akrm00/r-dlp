@@ -1,13 +1,13 @@
 {
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel -r dev",
-    "dev:backend": "pnpm --filter @r-dlp/backend dev",
+    "dev": "tauri dev",
+    "build": "tauri build",
     "dev:frontend": "pnpm --filter @r-dlp/frontend dev",
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm --filter @r-dlp/frontend lint"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.2.0",
     "shadcn": "^3.8.4"
   }
 }

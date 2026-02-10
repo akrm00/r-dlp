@@ -1,0 +1,12 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for r-dlp",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "dialog:allow-save",
+    "shell:default",
+    "shell:allow-open"
+  ]
+}

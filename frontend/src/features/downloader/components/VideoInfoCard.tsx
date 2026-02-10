@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import { ExternalLink, Clock, Eye, User, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,12 +35,11 @@ export function VideoInfoCard({ video }: VideoInfoCardProps) {
         <div className="flex flex-col gap-4 sm:flex-row">
           {video.thumbnailUrl && (
             <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-md sm:w-64">
-              <Image
+              <img
                 src={video.thumbnailUrl}
                 alt={video.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, 256px"
+                className="h-full w-full object-cover"
+                loading="lazy"
               />
             </div>
           )}

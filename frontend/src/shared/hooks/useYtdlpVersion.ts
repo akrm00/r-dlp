@@ -1,38 +1,15 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { get } from "@/shared/lib/apiClient";
-import type { VersionResponse } from "@/shared/types/api";
-
-const CACHE_DURATION_MS = 5 * 60 * 1000;
-
-let cachedVersion: string | null = null;
-let cacheTimestamp = 0;
+import { fetchVersion } from "@/features/downloader/api/downloaderApi";
 
 export function useYtdlpVersion() {
-  const [version, setVersion] = useState<string | null>(cachedVersion);
-  const [isLoading, setIsLoading] = useState(!cachedVersion);
+  const [version, setVersion] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const now = Date.now();
-    if (cachedVersion && now - cacheTimestamp < CACHE_DURATION_MS) {
-      setVersion(cachedVersion);
-      setIsLoading(false);
-      return;
-    }
-
-    get<VersionResponse>("/api/version")
-      .then((res) => {
-        cachedVersion = res.data.version;
-        cacheTimestamp = Date.now();
-        setVersion(res.data.version);
-      })
-      .catch(() => {
-        setVersion(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    fetchVersion()
+      .then(setVersion)
+      .catch(() => setVersion(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
   return { version, isLoading } as const;

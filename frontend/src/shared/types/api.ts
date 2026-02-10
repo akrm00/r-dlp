@@ -30,24 +30,3 @@ export type VideoInfo = {
   platform: string;
   formats: VideoFormat[];
 };
-
-export type AnalyzeResponse = {
-  success: true;
-  data: VideoInfo;
-};
-
-export type VersionResponse = {
-  success: true;
-  data: {
-    version: string;
-    lastUpdated: string | null;
-  };
-};
-
-export type ApiErrorResponse = {
-  success: false;
-  error: {
-    message: string;
-    code: string;
-  };
-};

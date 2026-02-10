@@ -1,12 +1,14 @@
 # Dependencies
 node_modules/
 
-# Next.js
-.next/
-out/
-
 # Build
 dist/
+
+# Vite
+frontend/.vite
+
+# Tauri
+src-tauri/target/
 
 # Environment
 .env
@@ -23,9 +25,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# Docker
-docker-compose.override.yml
-
 # Logs
 *.log
 npm-debug.log*
@@ -36,6 +35,5 @@ coverage/
 
 # Misc
 *.tsbuildinfo
-
-.env
 .claude/
+src-tauri/icons/
