@@ -15,6 +15,11 @@ type AppState =
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>({ status: "checking" });
+  const [resetKey, setResetKey] = useState(0);
+
+  const handleLogoClick = () => {
+    setResetKey((k) => k + 1);
+  };
 
   useEffect(() => {
     invokeCommand<YtdlpStatus>("check_ytdlp_status")
@@ -39,7 +44,7 @@ export default function App() {
     >
       <TooltipProvider>
         <div className="flex min-h-screen flex-col bg-background text-foreground">
-          <Header />
+          <Header onLogoClick={handleLogoClick} />
           <main className="flex-1">
             {appState.status === "checking" && (
               <div className="flex items-center justify-center py-24">
@@ -49,7 +54,7 @@ export default function App() {
             {appState.status === "setup" && (
               <SetupScreen onComplete={handleSetupComplete} />
             )}
-            {appState.status === "ready" && <HomePage />}
+            {appState.status === "ready" && <HomePage key={resetKey} />}
           </main>
         </div>
       </TooltipProvider>

@@ -10,6 +10,7 @@ pub fn run() {
             commands::analyze::analyze_url,
             commands::download::download_video,
             commands::download::get_download_filename,
+            commands::explorer::show_in_folder,
             commands::version::get_ytdlp_version,
             commands::setup::check_ytdlp_status,
             commands::setup::install_ytdlp,

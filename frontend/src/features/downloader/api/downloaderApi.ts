@@ -23,3 +23,7 @@ export function downloadVideo(
 export function fetchVersion(): Promise<string> {
   return invokeCommand<string>("get_ytdlp_version");
 }
+
+export function showInFolder(path: string): Promise<void> {
+  return invokeCommand<void>("show_in_folder", { path });
+}

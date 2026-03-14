@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
-import { getDownloadFilename, downloadVideo } from "../api/downloaderApi";
+import {
+  getDownloadFilename,
+  downloadVideo,
+  showInFolder,
+} from "../api/downloaderApi";
 import { TauriError } from "@/shared/lib/tauriClient";
 import { toast } from "sonner";
 
@@ -20,7 +24,17 @@ export function useDownload() {
 
       toast.info("Download started...");
       const savedPath = await downloadVideo(url, formatId, savePath);
-      toast.success(`Downloaded to: ${savedPath}`);
+      toast.success(`Downloaded to: ${savedPath}`, {
+        duration: 10000,
+        action: {
+          label: "Show in folder",
+          onClick: () => {
+            showInFolder(savedPath).catch(() => {
+              toast.error("Could not open file location.");
+            });
+          },
+        },
+      });
     } catch (err) {
       if (err instanceof TauriError && err.message.includes("cancelled")) {
         return;
