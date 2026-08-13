@@ -46,18 +46,26 @@ export default function App() {
       <TooltipProvider>
         <DownloadsProvider>
           <div className="flex min-h-screen flex-col bg-background text-foreground">
-            <Header onLogoClick={handleLogoClick} />
-            <main className="flex-1">
-              {appState.status === "checking" && (
-                <div className="flex items-center justify-center py-24">
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
-              )}
-              {appState.status === "setup" && (
-                <SetupScreen onComplete={handleSetupComplete} />
-              )}
-              {appState.status === "ready" && <MainTabs searchKey={resetKey} />}
-            </main>
+            {appState.status === "ready" ? (
+              // The tabs own the header so their triggers can sit in it.
+              <MainTabs searchKey={resetKey} onLogoClick={handleLogoClick} />
+            ) : (
+              <>
+                <Header onLogoClick={handleLogoClick} />
+                <main className="flex-1">
+                  {appState.status === "checking" && (
+                    <div className="flex items-center justify-center py-24">
+                      <p className="text-sm text-muted-foreground">
+                        Loading...
+                      </p>
+                    </div>
+                  )}
+                  {appState.status === "setup" && (
+                    <SetupScreen onComplete={handleSetupComplete} />
+                  )}
+                </main>
+              </>
+            )}
           </div>
         </DownloadsProvider>
       </TooltipProvider>

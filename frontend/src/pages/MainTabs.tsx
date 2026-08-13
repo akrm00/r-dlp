@@ -6,61 +6,74 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { Header } from "@/shared/components/Header";
 import { DownloadsPanel, useDownloads } from "@/features/downloads";
 import HomePage from "./HomePage";
 
-type MainTab = "search" | "downloads";
+type MainTab = "analyze" | "download";
+
+const PANEL_CLASS = "mx-auto max-w-5xl px-4 py-8";
 
 type MainTabsProps = {
-  /** Bumping this resets the search tab, leaving the downloads untouched. */
+  /** Bumping this resets the analyze tab, leaving the downloads untouched. */
   searchKey: number;
+  onLogoClick: () => void;
 };
 
-export function MainTabs({ searchKey }: MainTabsProps) {
-  const [tab, setTab] = useState<MainTab>("search");
+export function MainTabs({ searchKey, onLogoClick }: MainTabsProps) {
+  const [tab, setTab] = useState<MainTab>("analyze");
   const { activeCount } = useDownloads();
 
   return (
+    // `contents` keeps the tabs root out of the layout, so the header and main
+    // stay direct children of the page column.
     <Tabs
       value={tab}
       onValueChange={(value) => setTab(value as MainTab)}
-      className="mx-auto max-w-5xl px-4 py-8"
+      className="contents"
     >
-      <TabsList>
-        <TabsTrigger value="search">Download</TabsTrigger>
-        <TabsTrigger value="downloads">
-          Downloads
-          {activeCount > 0 && (
-            <Badge variant="secondary" className="ml-1.5 tabular-nums">
-              {activeCount}
-            </Badge>
-          )}
-        </TabsTrigger>
-      </TabsList>
+      <Header
+        onLogoClick={onLogoClick}
+        nav={
+          <TabsList>
+            <TabsTrigger value="analyze">Analyze</TabsTrigger>
+            <TabsTrigger value="download">
+              Download
+              {activeCount > 0 && (
+                <Badge variant="secondary" className="ml-1 tabular-nums">
+                  {activeCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        }
+      />
 
-      {/* Both panels stay mounted so analysis results and download progress
-          survive a tab switch. `forceMount` alone keeps Radix from hiding the
-          inactive panel, so `hidden` is set explicitly. */}
-      <TabsContent
-        value="search"
-        forceMount
-        hidden={tab !== "search"}
-        className="mt-6"
-      >
-        <HomePage
-          key={searchKey}
-          onDownloadQueued={() => setTab("downloads")}
-        />
-      </TabsContent>
+      <main className="flex-1">
+        {/* Both panels stay mounted so analysis results and download progress
+            survive a tab switch. `forceMount` alone keeps Radix from hiding the
+            inactive panel, so `hidden` is set explicitly. */}
+        <TabsContent
+          value="analyze"
+          forceMount
+          hidden={tab !== "analyze"}
+          className={PANEL_CLASS}
+        >
+          <HomePage
+            key={searchKey}
+            onDownloadQueued={() => setTab("download")}
+          />
+        </TabsContent>
 
-      <TabsContent
-        value="downloads"
-        forceMount
-        hidden={tab !== "downloads"}
-        className="mt-6"
-      >
-        <DownloadsPanel />
-      </TabsContent>
+        <TabsContent
+          value="download"
+          forceMount
+          hidden={tab !== "download"}
+          className={PANEL_CLASS}
+        >
+          <DownloadsPanel />
+        </TabsContent>
+      </main>
     </Tabs>
   );
 }

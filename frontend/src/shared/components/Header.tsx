@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,9 +7,11 @@ import { useYtdlpVersion } from "@/shared/hooks/useYtdlpVersion";
 
 type HeaderProps = {
   onLogoClick?: () => void;
+  /** Section navigation, rendered next to the theme toggle. */
+  nav?: ReactNode;
 };
 
-export function Header({ onLogoClick }: HeaderProps) {
+export function Header({ onLogoClick, nav }: HeaderProps) {
   const { version, isLoading: isVersionLoading } = useYtdlpVersion();
 
   return (
@@ -33,7 +36,8 @@ export function Header({ onLogoClick }: HeaderProps) {
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {nav}
           <ThemeToggle />
         </div>
       </div>
