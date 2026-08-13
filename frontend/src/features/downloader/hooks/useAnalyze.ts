@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { analyzeUrl } from "../api/downloaderApi";
-import { TauriError } from "@/shared/lib/tauriClient";
+import { getErrorMessage } from "@/shared/lib/tauriClient";
 import type { VideoInfo } from "@/shared/types/api";
 
 type AnalyzeState =
@@ -18,12 +18,14 @@ export function useAnalyze() {
     try {
       const data = await analyzeUrl(url);
       setState({ status: "success", data });
-    } catch (err) {
-      const message =
-        err instanceof TauriError
-          ? err.message
-          : "Failed to analyze URL. Please try again.";
-      setState({ status: "error", message });
+    } catch (error) {
+      setState({
+        status: "error",
+        message: getErrorMessage(
+          error,
+          "Failed to analyze URL. Please try again.",
+        ),
+      });
     }
   }, []);
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -7,27 +8,57 @@ import {
   FormatList,
   AnalyzeLoadingSkeleton,
   useAnalyze,
-  useDownload,
   useFormatFilter,
 } from "@/features/downloader";
-import { filterFormats } from "@/features/downloader/services/formatService";
+import {
+  filterFormats,
+  getFormatDescription,
+} from "@/features/downloader/services/formatService";
+import { useDownloads } from "@/features/downloads";
 
-export default function HomePage() {
+type HomePageProps = {
+  /** Called once a download has been queued, so the shell can reveal it. */
+  onDownloadQueued: () => void;
+};
+
+export default function HomePage({ onDownloadQueued }: HomePageProps) {
   const { state, analyze } = useAnalyze();
-  const { download } = useDownload();
+  const { startDownload } = useDownloads();
+  const [pendingFormatId, setPendingFormatId] = useState<string | null>(null);
+
   const formats = state.status === "success" ? state.data.formats : [];
   const { filteredFormats, filter, setFilter } = useFormatFilter(formats);
 
-  const handleDownload = (formatId: string) => {
+  const handleDownload = async (formatId: string) => {
     if (state.status !== "success") return;
-    download(state.data.sourceUrl, formatId);
+
+    const video = state.data;
+    const format = video.formats.find((item) => item.formatId === formatId);
+    if (!format) return;
+
+    setPendingFormatId(formatId);
+    try {
+      const downloadId = await startDownload({
+        url: video.sourceUrl,
+        formatId,
+        formatLabel: getFormatDescription(format),
+        title: video.title,
+        thumbnailUrl: video.thumbnailUrl,
+      });
+
+      if (downloadId) {
+        onDownloadQueued();
+      }
+    } finally {
+      setPendingFormatId(null);
+    }
   };
 
   const videoCount = filterFormats(formats, "video").length;
   const audioCount = filterFormats(formats, "audio").length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Download Video or Audio</CardTitle>
@@ -66,6 +97,7 @@ export default function HomePage() {
             <FormatList
               formats={filteredFormats}
               onDownload={handleDownload}
+              pendingFormatId={pendingFormatId}
             />
           </div>
         </>

@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/shared/components/Header";
 import { SetupScreen } from "@/features/setup";
-import HomePage from "@/pages/HomePage";
+import { DownloadsProvider } from "@/features/downloads";
+import { MainTabs } from "@/pages/MainTabs";
 import { invokeCommand } from "@/shared/lib/tauriClient";
 import type { YtdlpStatus } from "@/features/setup/types";
 
@@ -43,20 +44,22 @@ export default function App() {
       disableTransitionOnChange
     >
       <TooltipProvider>
-        <div className="flex min-h-screen flex-col bg-background text-foreground">
-          <Header onLogoClick={handleLogoClick} />
-          <main className="flex-1">
-            {appState.status === "checking" && (
-              <div className="flex items-center justify-center py-24">
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              </div>
-            )}
-            {appState.status === "setup" && (
-              <SetupScreen onComplete={handleSetupComplete} />
-            )}
-            {appState.status === "ready" && <HomePage key={resetKey} />}
-          </main>
-        </div>
+        <DownloadsProvider>
+          <div className="flex min-h-screen flex-col bg-background text-foreground">
+            <Header onLogoClick={handleLogoClick} />
+            <main className="flex-1">
+              {appState.status === "checking" && (
+                <div className="flex items-center justify-center py-24">
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                </div>
+              )}
+              {appState.status === "setup" && (
+                <SetupScreen onComplete={handleSetupComplete} />
+              )}
+              {appState.status === "ready" && <MainTabs searchKey={resetKey} />}
+            </main>
+          </div>
+        </DownloadsProvider>
       </TooltipProvider>
       <Toaster />
     </ThemeProvider>

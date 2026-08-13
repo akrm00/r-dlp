@@ -4,5 +4,4 @@ export { FormatFilters } from "./components/FormatFilters";
 export { FormatList } from "./components/FormatList";
 export { AnalyzeLoadingSkeleton } from "./components/AnalyzeLoadingSkeleton";
 export { useAnalyze } from "./hooks/useAnalyze";
-export { useDownload } from "./hooks/useDownload";
 export { useFormatFilter } from "./hooks/useFormatFilter";

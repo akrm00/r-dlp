@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchVersion } from "@/features/downloader/api/downloaderApi";
+import { fetchYtdlpVersion } from "@/shared/services/ytdlpService";
 
 export function useYtdlpVersion() {
   const [version, setVersion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchVersion()
+    fetchYtdlpVersion()
       .then(setVersion)
       .catch(() => setVersion(null))
       .finally(() => setIsLoading(false));

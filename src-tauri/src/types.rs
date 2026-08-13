@@ -47,6 +47,50 @@ pub struct YtdlpStatus {
     pub path: Option<String>,
 }
 
+/// Lifecycle stage of a single download, streamed to the frontend.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DownloadStage {
+    /// A queue slot was acquired and yt-dlp is about to start.
+    Started,
+    /// Bytes are being transferred.
+    Downloading,
+    /// Transfer is done, yt-dlp is running post-processing (merge, remux).
+    Processing,
+    /// yt-dlp reported the transfer as finished.
+    Finished,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadProgress {
+    pub download_id: String,
+    pub stage: DownloadStage,
+    pub downloaded_bytes: Option<u64>,
+    /// Exact total when yt-dlp knows it, otherwise its estimate.
+    pub total_bytes: Option<u64>,
+    pub speed_bytes_per_sec: Option<f64>,
+    pub eta_seconds: Option<u64>,
+    pub fragment_index: Option<u32>,
+    pub fragment_count: Option<u32>,
+}
+
+/// How a download run ended. A run that was stopped by the user is not an error.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DownloadOutcome {
+    Completed,
+    Cancelled,
+    Paused,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadResult {
+    pub outcome: DownloadOutcome,
+    pub path: String,
+}
+
 // yt-dlp raw JSON DTOs (snake_case matching yt-dlp output)
 
 #[derive(Debug, Deserialize)]

@@ -1,3 +1,4 @@
+import { formatBytes } from "@/shared/utils/format";
 import type { VideoFormat } from "@/shared/types/api";
 
 export type FormatFilter = "all" | "video" | "audio";
@@ -34,17 +35,7 @@ export function sortFormats(
 
 export function formatFileSize(bytes: number | null): string {
   if (bytes === null || bytes === 0) return "Unknown";
-
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(size < 10 ? 1 : 0)} ${units[unitIndex]}`;
+  return formatBytes(bytes);
 }
 
 export function formatBitrate(kbps: number | null): string {

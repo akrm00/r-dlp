@@ -1,6 +1,5 @@
 use crate::types::{to_video_info, VideoInfo, YtDlpInfoDTO};
 use anyhow::{bail, Context, Result};
-use std::path::PathBuf;
 use tokio::process::Command;
 
 use super::ytdlp_setup;
@@ -16,7 +15,7 @@ pub(crate) fn create_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
 const ANALYZE_TIMEOUT_SECS: u64 = 30;
 
 /// Get the yt-dlp binary path: local app data binary first, then system PATH.
-fn get_binary_path() -> String {
+pub(crate) fn get_binary_path() -> String {
     if let Some(local_path) = ytdlp_setup::get_local_binary_path() {
         if local_path.exists() {
             return local_path.to_string_lossy().to_string();
@@ -86,39 +85,6 @@ pub async fn get_filename(url: &str, format_id: &str) -> Result<String> {
     Ok("download".to_string())
 }
 
-pub async fn download_to_file(
-    url: &str,
-    format_id: &str,
-    output_path: &PathBuf,
-) -> Result<()> {
-    let binary = get_binary_path();
-    let path_str = output_path
-        .to_str()
-        .context("Invalid output path")?;
-
-    let output = create_command(&binary)
-        .args([
-            "-f",
-            format_id,
-            "-o",
-            path_str,
-            "--no-warnings",
-            "--no-playlist",
-            url,
-        ])
-        .output()
-        .await
-        .context("Failed to start yt-dlp download")?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let cleaned = clean_error_message(&stderr);
-        bail!("{}", cleaned);
-    }
-
-    Ok(())
-}
-
 pub async fn get_version() -> Result<String> {
     let binary = get_binary_path();
 
@@ -137,7 +103,8 @@ pub async fn get_version() -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
-fn clean_error_message(stderr: &str) -> String {
+/// Turn yt-dlp's stderr into a short, user-facing message.
+pub(crate) fn clean_error_message(stderr: &str) -> String {
     if stderr.contains("Unsupported URL") {
         return "This URL is not supported. Please check the URL and try again.".to_string();
     }

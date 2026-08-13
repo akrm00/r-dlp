@@ -7,6 +7,14 @@ export class TauriError extends Error {
   }
 }
 
+/** Turn an unknown thrown value into a message that can be shown to the user. */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof TauriError && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
+}
+
 export async function invokeCommand<TResult>(
   command: string,
   args?: Record<string, unknown>,

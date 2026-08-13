@@ -1,4 +1,4 @@
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -19,9 +19,15 @@ import type { VideoFormat } from "@/shared/types/api";
 type FormatListProps = {
   formats: VideoFormat[];
   onDownload: (formatId: string) => void;
+  /** Format currently waiting for its save location, if any. */
+  pendingFormatId: string | null;
 };
 
-export function FormatList({ formats, onDownload }: FormatListProps) {
+export function FormatList({
+  formats,
+  onDownload,
+  pendingFormatId,
+}: FormatListProps) {
   if (formats.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -93,9 +99,14 @@ export function FormatList({ formats, onDownload }: FormatListProps) {
                   size="sm"
                   variant="ghost"
                   onClick={() => onDownload(format.formatId)}
+                  disabled={pendingFormatId !== null}
                   aria-label={`Download ${format.extension} ${format.resolution ?? "audio"}`}
                 >
-                  <Download className="h-4 w-4" />
+                  {pendingFormatId === format.formatId ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                 </Button>
               </TableCell>
             </TableRow>
