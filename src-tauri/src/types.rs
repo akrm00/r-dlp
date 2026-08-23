@@ -45,6 +45,18 @@ pub struct YtdlpStatus {
     pub installed: bool,
     pub version: Option<String>,
     pub path: Option<String>,
+    /// Whether the active binary is the one r-dlp installs and can update itself,
+    /// as opposed to a system binary found on PATH.
+    pub managed: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateCheckResult {
+    pub current_version: String,
+    pub latest_version: String,
+    pub update_available: bool,
+    pub managed: bool,
 }
 
 /// Lifecycle stage of a single download, streamed to the frontend.

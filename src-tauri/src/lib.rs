@@ -20,6 +20,8 @@ pub fn run() {
             commands::version::get_ytdlp_version,
             commands::setup::check_ytdlp_status,
             commands::setup::install_ytdlp,
+            commands::setup::check_ytdlp_update,
+            commands::setup::update_ytdlp,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
