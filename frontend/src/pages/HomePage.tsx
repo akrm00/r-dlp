@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { motion } from "motion/react";
+import { Link2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   UrlInputSection,
   VideoInfoCard,
@@ -15,6 +16,8 @@ import {
   getFormatDescription,
 } from "@/features/downloader/services/formatService";
 import { useDownloads } from "@/features/downloads";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { SPRING } from "@/shared/motion/springs";
 
 type HomePageProps = {
   /** Called once a download has been queued, so the shell can reveal it. */
@@ -58,18 +61,21 @@ export default function HomePage({ onDownloadQueued }: HomePageProps) {
   const audioCount = filterFormats(formats, "audio").length;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Download Video or Audio</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UrlInputSection
-            onAnalyze={analyze}
-            isLoading={state.status === "loading"}
-          />
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <section className="space-y-5">
+        <div className="space-y-1.5">
+          <h1 className="text-display">Download video or audio</h1>
+          <p className="text-muted-foreground text-body">
+            Paste a link from YouTube, Twitch, X, or any of the thousand other
+            sites yt-dlp supports.
+          </p>
+        </div>
+
+        <UrlInputSection
+          onAnalyze={analyze}
+          isLoading={state.status === "loading"}
+        />
+      </section>
 
       {state.status === "loading" && <AnalyzeLoadingSkeleton />}
 
@@ -80,12 +86,18 @@ export default function HomePage({ onDownloadQueued }: HomePageProps) {
       )}
 
       {state.status === "success" && (
-        <>
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={SPRING.gentle}
+          className="space-y-6"
+          aria-label="Analysis results"
+        >
           <VideoInfoCard video={state.data} />
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Available Formats</h2>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-heading">Available formats</h2>
               <FormatFilters
                 filter={filter}
                 onFilterChange={setFilter}
@@ -100,13 +112,15 @@ export default function HomePage({ onDownloadQueued }: HomePageProps) {
               pendingFormatId={pendingFormatId}
             />
           </div>
-        </>
+        </motion.section>
       )}
 
       {state.status === "idle" && (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          Paste a URL above and click Analyze to get started.
-        </p>
+        <EmptyState
+          icon={Link2}
+          title="Nothing analyzed yet"
+          description="Paste a link above and every available quality will show up here."
+        />
       )}
     </div>
   );

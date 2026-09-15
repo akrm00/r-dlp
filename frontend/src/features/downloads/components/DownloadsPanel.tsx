@@ -1,5 +1,7 @@
-import { Download } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { ArrowDownToLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   getQueuePosition,
   summarizeDownloads,
@@ -22,13 +24,24 @@ export function DownloadsPanel() {
   );
 
   return (
-    <section aria-labelledby="downloads-heading" className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="downloads-heading" className="text-lg font-semibold">
-          Downloads
-        </h2>
+    <section aria-labelledby="downloads-heading" className="space-y-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <h1 id="downloads-heading" className="text-display">
+            Downloads
+          </h1>
+          <p className="text-muted-foreground text-body">
+            Three run at a time; the rest start automatically as slots free up.
+          </p>
+        </div>
+
         {hasClearableItems && (
-          <Button type="button" variant="outline" size="sm" onClick={clearFinished}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearFinished}
+          >
             Clear finished
           </Button>
         )}
@@ -50,28 +63,27 @@ type DownloadsListProps = {
 function DownloadsList({ items }: DownloadsListProps) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-16 text-center">
-        <Download className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-        <div className="space-y-1">
-          <p className="text-sm font-medium">No downloads yet</p>
-          <p className="text-sm text-muted-foreground">
-            Analyze a URL and pick a format — it will show up here with live
-            progress.
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={ArrowDownToLine}
+        title="No downloads yet"
+        description="Pick a format on the Analyze tab and it will appear here with live progress."
+      />
     );
   }
 
   return (
-    <ul className="space-y-3">
-      {items.map((item) => (
-        <DownloadRow
-          key={item.id}
-          item={item}
-          queuePosition={getQueuePosition(items, item.id)}
-        />
-      ))}
+    <ul className="space-y-2.5">
+      {/* Rows spring in and out, and `layout` on each row makes the rest slide
+          up when one leaves rather than teleporting. */}
+      <AnimatePresence initial={false}>
+        {items.map((item) => (
+          <DownloadRow
+            key={item.id}
+            item={item}
+            queuePosition={getQueuePosition(items, item.id)}
+          />
+        ))}
+      </AnimatePresence>
     </ul>
   );
 }

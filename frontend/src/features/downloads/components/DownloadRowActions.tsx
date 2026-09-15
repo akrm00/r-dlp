@@ -24,7 +24,7 @@ export function DownloadRowActions({ item }: DownloadRowActionsProps) {
   const isPaused = item.status === "paused";
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex shrink-0 items-center gap-0.5">
       {isRunning && (
         <>
           <ActionButton
@@ -92,10 +92,11 @@ function ActionButton({
       <TooltipTrigger asChild>
         <Button
           type="button"
-          size="icon-sm"
+          size="icon-xs"
           variant="ghost"
           onClick={onClick}
           aria-label={description}
+          className="size-7 [&_svg:not([class*='size-'])]:size-3.5"
         >
           {icon}
         </Button>

@@ -1,5 +1,6 @@
-import { Badge } from "@/components/ui/badge";
+import { motion } from "motion/react";
 import { Progress } from "@/components/ui/progress";
+import { SPRING } from "@/shared/motion/springs";
 import {
   computePercent,
   formatEta,
@@ -11,6 +12,7 @@ import { DownloadRowActions } from "./DownloadRowActions";
 import { DownloadStatusBadge } from "./DownloadStatusBadge";
 import type { DownloadItem } from "../types";
 
+/** Statuses with nothing left to show on a bar. */
 const NO_PROGRESS_BAR: readonly string[] = ["failed", "cancelled"];
 
 type DownloadRowProps = {
@@ -24,7 +26,14 @@ export function DownloadRow({ item, queuePosition }: DownloadRowProps) {
   const hasProgressBar = !NO_PROGRESS_BAR.includes(item.status);
 
   return (
-    <li className="flex gap-3 rounded-lg border bg-card p-3">
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: -8, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={SPRING.default}
+      className="bg-card border-hairline floating flex gap-3.5 rounded-2xl border p-3.5"
+    >
       {item.thumbnailUrl && (
         <img
           src={item.thumbnailUrl}
@@ -32,31 +41,22 @@ export function DownloadRow({ item, queuePosition }: DownloadRowProps) {
           width={112}
           height={63}
           loading="lazy"
-          className="hidden h-[63px] w-28 shrink-0 rounded-md object-cover sm:block"
+          className="border-hairline hidden h-[63px] w-28 shrink-0 rounded-lg border object-cover sm:block"
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium" title={item.title}>
+            <p className="text-body truncate font-medium" title={item.title}>
               {item.title}
             </p>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="max-w-44 truncate font-mono text-xs"
-                title={item.formatLabel}
-              >
-                {item.formatLabel}
-              </Badge>
-              <span
-                className="truncate text-xs text-muted-foreground"
-                title={item.savePath}
-              >
-                {getFileName(item.savePath)}
-              </span>
-            </div>
+            <p
+              className="text-muted-foreground mt-0.5 truncate text-caption"
+              title={item.savePath}
+            >
+              {item.formatLabel} · {getFileName(item.savePath)}
+            </p>
           </div>
 
           <DownloadStatusBadge status={item.status} />
@@ -67,18 +67,23 @@ export function DownloadRow({ item, queuePosition }: DownloadRowProps) {
           <div className="flex items-center gap-3">
             <Progress
               value={percent}
+              tone={item.status === "completed" ? "success" : "default"}
               aria-label={`Download progress for ${item.title}`}
               className="flex-1"
             />
-            <span className="w-10 shrink-0 text-right font-mono text-xs text-muted-foreground">
+            <motion.span
+              layout="position"
+              transition={SPRING.default}
+              className="text-muted-foreground tabular w-10 shrink-0 text-right text-caption"
+            >
               {percent === null ? "—" : `${percent}%`}
-            </span>
+            </motion.span>
           </div>
         )}
 
         <DownloadDetails item={item} queuePosition={queuePosition} />
       </div>
-    </li>
+    </motion.li>
   );
 }
 
@@ -90,7 +95,7 @@ type DownloadDetailsProps = {
 function DownloadDetails({ item, queuePosition }: DownloadDetailsProps) {
   if (item.status === "failed") {
     return (
-      <p className="text-xs text-destructive">
+      <p className="text-destructive text-caption">
         {item.errorMessage ?? "Download failed. Please try again."}
       </p>
     );
@@ -98,17 +103,17 @@ function DownloadDetails({ item, queuePosition }: DownloadDetailsProps) {
 
   if (item.status === "queued") {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-caption">
         {queuePosition === null
           ? "Waiting to start…"
-          : `Waiting to start — position ${queuePosition} in queue`}
+          : `Waiting to start — number ${queuePosition} in the queue`}
       </p>
     );
   }
 
   if (item.status === "cancelled") {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-caption">
         Cancelled before it finished.
       </p>
     );
@@ -116,14 +121,14 @@ function DownloadDetails({ item, queuePosition }: DownloadDetailsProps) {
 
   if (item.status === "completed") {
     return (
-      <p className="truncate text-xs text-muted-foreground" title={item.savePath}>
-        Saved to {item.savePath}
+      <p className="text-muted-foreground tabular truncate text-caption">
+        {formatTransferred(item)} · saved
       </p>
     );
   }
 
   return (
-    <p className="font-mono text-xs text-muted-foreground">
+    <p className="text-muted-foreground tabular text-caption">
       {formatTransferred(item)}
       {item.status === "downloading" && (
         <>

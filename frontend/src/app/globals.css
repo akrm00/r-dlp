@@ -7,8 +7,48 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  /* System font stack: it already ships optical sizing, tracking tables and
+     legibility tuning, and it needs no network request under our CSP. */
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI Variable Text", "Segoe UI",
+    -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* Type scale — size, leading, tracking and weight move together.
+     Large text gets negative tracking and tight leading; small text gets a
+     touch of positive tracking. A single letter-spacing would be wrong here. */
+  --text-display: 2rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.022em;
+  --text-display--font-weight: 600;
+
+  --text-title: 1.125rem;
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.015em;
+  --text-title--font-weight: 600;
+
+  --text-heading: 0.9375rem;
+  --text-heading--line-height: 1.35;
+  --text-heading--letter-spacing: -0.008em;
+  --text-heading--font-weight: 600;
+
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: 0em;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.006em;
+
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-hairline: var(--hairline);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,80 +87,208 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/*
+  Light theme.
+
+  The page is deliberately *not* pure white: cards sit above it at oklch(1) and
+  carry a shadow, so elevation is visible instead of implied by a border alone.
+  Every foreground/surface pair below was checked against WCAG AA (4.5:1 text,
+  3:1 focus ring) rather than eyeballed.
+*/
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  color-scheme: light;
+  --radius: 0.75rem;
+
+  --surface-base: oklch(0.978 0 0);
+  --surface-raised: oklch(1 0 0);
+  --surface-overlay: oklch(1 0 0);
+  --surface-sunken: oklch(0.955 0 0);
+
+  --background: var(--surface-base);
+  --foreground: oklch(0.18 0 0);
+  --card: var(--surface-raised);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-overlay);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.21 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --secondary: oklch(0.955 0 0);
+  --secondary-foreground: oklch(0.21 0 0);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.955 0 0);
+  --accent-foreground: oklch(0.21 0 0);
+
+  --success: oklch(0.52 0.13 150);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.5 0.12 75);
+  --warning-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.52 0.19 25);
+
+  --border: oklch(0.9 0 0);
+  --hairline: oklch(0 0 0 / 8%);
+  --input: oklch(0.89 0 0);
+  --ring: oklch(0.55 0 0);
+
+  /* Translucent chrome. Content scrolls underneath rather than being pushed
+     aside by an opaque strip. */
+  --material-bg: color-mix(in oklab, var(--surface-base) 72%, transparent);
+  --material-blur: 20px;
+  --material-edge: oklch(1 0 0 / 60%);
+
+  /* Two-layer shadows: a tight contact shadow plus a wide ambient one.
+     Larger surfaces use the deeper steps, so size reads as thickness. */
+  --shadow-raised: 0 1px 2px oklch(0 0 0 / 5%), 0 1px 1px oklch(0 0 0 / 3%);
+  --shadow-floating: 0 4px 12px oklch(0 0 0 / 7%), 0 1px 3px oklch(0 0 0 / 5%);
+  --shadow-overlay: 0 16px 40px oklch(0 0 0 / 12%), 0 2px 8px oklch(0 0 0 / 6%);
+  /* Dark mode separates surfaces with a lit top edge instead of a shadow. */
+  --edge-highlight: none;
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.18 0 0);
+  --sidebar-primary: oklch(0.21 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.955 0 0);
+  --sidebar-accent-foreground: oklch(0.21 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.55 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  color-scheme: dark;
+
+  --surface-base: oklch(0.155 0 0);
+  --surface-raised: oklch(0.202 0 0);
+  --surface-overlay: oklch(0.245 0 0);
+  --surface-sunken: oklch(0.135 0 0);
+
+  --background: var(--surface-base);
+  --foreground: oklch(0.97 0 0);
+  --card: var(--surface-raised);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-overlay);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.92 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.27 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.27 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+
+  --success: oklch(0.75 0.15 150);
+  --success-foreground: oklch(0.16 0 0);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.16 0 0);
+  --destructive: oklch(0.7 0.17 25);
+
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --hairline: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.68 0 0);
+
+  --material-bg: color-mix(in oklab, var(--surface-base) 68%, transparent);
+  --material-blur: 24px;
+  --material-edge: oklch(1 0 0 / 8%);
+
+  --shadow-raised: 0 1px 2px oklch(0 0 0 / 30%);
+  --shadow-floating: 0 4px 16px oklch(0 0 0 / 40%);
+  --shadow-overlay: 0 16px 40px oklch(0 0 0 / 55%);
+  --edge-highlight: inset 0 1px 0 oklch(1 0 0 / 6%);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: oklch(0.202 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.27 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.68 0 0);
+}
+
+/* A translucent functional layer: blurred, saturated, with a bright top edge
+   where the light catches the material. */
+@utility material {
+  background: var(--material-bg);
+  backdrop-filter: blur(var(--material-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--material-blur)) saturate(180%);
+}
+
+@utility elevated {
+  box-shadow: var(--shadow-raised), var(--edge-highlight);
+}
+
+@utility floating {
+  box-shadow: var(--shadow-floating), var(--edge-highlight);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Numbers that change in place — progress, speed, ETA, sizes — must not
+     re-flow their own width on every tick. */
+  .tabular,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* Reduced motion: keep the meaning, drop the vestibular part. Springs are
+   handled in JS by MotionConfig; this covers the CSS side. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced transparency: make the material frosty-solid rather than see-through. */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  .dark {
+    --material-bg: var(--surface-base);
+    --material-blur: 0px;
+  }
+}
+
+/* More contrast: near-solid surfaces with defined borders. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: oklch(0.38 0 0);
+    --border: oklch(0.7 0 0);
+    --hairline: oklch(0 0 0 / 25%);
+  }
+
+  .dark {
+    --muted-foreground: oklch(0.82 0 0);
+    --border: oklch(1 0 0 / 30%);
+    --hairline: oklch(1 0 0 / 25%);
   }
 }

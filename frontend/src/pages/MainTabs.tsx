@@ -1,18 +1,17 @@
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { useState, type ReactNode } from "react";
+import { motion } from "motion/react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { Header } from "@/shared/components/Header";
+import { SegmentedControl } from "@/shared/components/SegmentedControl";
+import { PANEL_SLIDE_PX, SPRING } from "@/shared/motion/springs";
 import { DownloadsPanel, useDownloads } from "@/features/downloads";
 import HomePage from "./HomePage";
 
 type MainTab = "analyze" | "download";
 
-const PANEL_CLASS = "mx-auto max-w-5xl px-4 py-8";
+/** Left-to-right order, which is also the direction panels travel. */
+const TAB_ORDER: readonly MainTab[] = ["analyze", "download"];
 
 type MainTabsProps = {
   /** Bumping this resets the analyze tab, leaving the downloads untouched. */
@@ -35,45 +34,77 @@ export function MainTabs({ searchKey, onLogoClick }: MainTabsProps) {
       <Header
         onLogoClick={onLogoClick}
         nav={
-          <TabsList>
-            <TabsTrigger value="analyze">Analyze</TabsTrigger>
-            <TabsTrigger value="download">
-              Download
-              {activeCount > 0 && (
-                <Badge variant="secondary" className="ml-1 tabular-nums">
-                  {activeCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <SegmentedControl
+            label="Sections"
+            layoutId="main-nav"
+            value={tab}
+            items={[
+              { value: "analyze", label: "Analyze" },
+              {
+                value: "download",
+                label: (
+                  <>
+                    Download
+                    {activeCount > 0 && (
+                      <span className="bg-primary text-primary-foreground tabular ml-0.5 rounded-full px-1.5 py-px text-[0.6875rem] leading-4">
+                        {activeCount}
+                      </span>
+                    )}
+                  </>
+                ),
+              },
+            ]}
+          />
         }
       />
 
-      <main className="flex-1">
-        {/* Both panels stay mounted so analysis results and download progress
-            survive a tab switch. `forceMount` alone keeps Radix from hiding the
-            inactive panel, so `hidden` is set explicitly. */}
-        <TabsContent
-          value="analyze"
-          forceMount
-          hidden={tab !== "analyze"}
-          className={PANEL_CLASS}
-        >
-          <HomePage
-            key={searchKey}
-            onDownloadQueued={() => setTab("download")}
-          />
-        </TabsContent>
+      <main className="relative flex-1">
+        <TabPanel value="analyze" activeTab={tab}>
+          <HomePage key={searchKey} onDownloadQueued={() => setTab("download")} />
+        </TabPanel>
 
-        <TabsContent
-          value="download"
-          forceMount
-          hidden={tab !== "download"}
-          className={PANEL_CLASS}
-        >
+        <TabPanel value="download" activeTab={tab}>
           <DownloadsPanel />
-        </TabsContent>
+        </TabPanel>
       </main>
     </Tabs>
+  );
+}
+
+type TabPanelProps = {
+  value: MainTab;
+  activeTab: MainTab;
+  children: ReactNode;
+};
+
+/**
+ * A tab panel that stays mounted — analysis results and in-flight downloads
+ * must survive a tab switch — and slides along the axis the tabs are laid out
+ * on, so a panel always leaves towards where its tab sits and returns the same
+ * way.
+ */
+function TabPanel({ value, activeTab, children }: TabPanelProps) {
+  const isActive = value === activeTab;
+  const offset =
+    (TAB_ORDER.indexOf(value) - TAB_ORDER.indexOf(activeTab)) * PANEL_SLIDE_PX;
+
+  return (
+    <TabsContent value={value} forceMount asChild>
+      <motion.div
+        // `inert` takes the hidden panel out of the accessibility tree and out
+        // of tab order, which `hidden` also did — but without blocking motion.
+        inert={!isActive}
+        initial={false}
+        animate={{ opacity: isActive ? 1 : 0, x: offset }}
+        transition={SPRING.default}
+        className={cn(
+          "mx-auto w-full max-w-5xl px-5 py-8",
+          // The inactive panel leaves the flow so it cannot dictate page height.
+          !isActive && "pointer-events-none absolute inset-x-0 top-0",
+        )}
+      >
+        {children}
+      </motion.div>
+    </TabsContent>
   );
 }

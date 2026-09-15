@@ -1,13 +1,8 @@
-import { Download, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { motion } from "motion/react";
+import { AlertCircle, CheckCircle2, Download, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { SPRING } from "@/shared/motion/springs";
 import { useYtdlpSetup } from "../hooks/useYtdlpSetup";
 
 type SetupScreenProps = {
@@ -18,65 +13,69 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   const { state, install, reset } = useYtdlpSetup();
 
   return (
-    <div className="flex items-center justify-center px-4 py-24">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <Download className="h-6 w-6" />
+    <div className="flex items-center justify-center px-5 py-20">
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={SPRING.gentle}
+        className="bg-card border-hairline floating w-full max-w-sm rounded-2xl border p-7"
+      >
+        <div className="flex flex-col items-center gap-5 text-center">
+          <div className="bg-muted flex size-14 items-center justify-center rounded-2xl">
+            <Download className="size-6" aria-hidden="true" />
           </div>
-          <CardTitle>Setup Required</CardTitle>
-          <CardDescription>
-            r-dlp needs yt-dlp to download videos. It will be installed
-            automatically.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {state.status === "idle" && (
-            <Button onClick={install} className="w-full" size="lg">
-              <Download className="mr-2 h-4 w-4" />
-              Install yt-dlp
-            </Button>
-          )}
 
-          {state.status === "installing" && (
-            <Button disabled className="w-full" size="lg">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Downloading yt-dlp...
-            </Button>
-          )}
+          <div className="space-y-2">
+            <h1 className="text-title">One quick setup</h1>
+            <p className="text-muted-foreground text-body">
+              r-dlp uses yt-dlp to do the downloading. It installs in a few
+              seconds and stays up to date.
+            </p>
+          </div>
 
-          {state.status === "error" && (
-            <>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{state.message}</AlertDescription>
-              </Alert>
-              <Button onClick={reset} variant="outline" className="w-full">
-                Try Again
+          <div className="w-full space-y-3">
+            {state.status === "idle" && (
+              <Button onClick={install} className="w-full" size="lg">
+                <Download className="size-4" />
+                Install yt-dlp
               </Button>
-            </>
-          )}
+            )}
 
-          {state.status === "success" && (
-            <>
-              <Alert>
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  yt-dlp {state.version} installed successfully.
-                </AlertDescription>
-              </Alert>
-              <Button onClick={onComplete} className="w-full" size="lg">
-                Get Started
+            {state.status === "installing" && (
+              <Button disabled className="w-full" size="lg">
+                <Loader2 className="size-4 animate-spin" />
+                Downloading…
               </Button>
-            </>
-          )}
+            )}
 
-          <p className="text-center text-xs text-muted-foreground">
-            yt-dlp is an open-source tool for downloading media from thousands
-            of sites.
-          </p>
-        </CardContent>
-      </Card>
+            {state.status === "error" && (
+              <>
+                <Alert variant="destructive">
+                  <AlertCircle />
+                  <AlertDescription>{state.message}</AlertDescription>
+                </Alert>
+                <Button onClick={reset} variant="outline" className="w-full">
+                  Try again
+                </Button>
+              </>
+            )}
+
+            {state.status === "success" && (
+              <>
+                <Alert variant="success">
+                  <CheckCircle2 />
+                  <AlertDescription>
+                    yt-dlp {state.version} is ready.
+                  </AlertDescription>
+                </Alert>
+                <Button onClick={onComplete} className="w-full" size="lg">
+                  Get started
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

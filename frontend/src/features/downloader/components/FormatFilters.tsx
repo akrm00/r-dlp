@@ -1,4 +1,5 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/shared/components/SegmentedControl";
 import type { FormatFilter } from "../services/formatService";
 
 type FormatFiltersProps = {
@@ -19,19 +20,18 @@ export function FormatFilters({
   return (
     <Tabs
       value={filter}
-      onValueChange={(v) => onFilterChange(v as FormatFilter)}
+      onValueChange={(value) => onFilterChange(value as FormatFilter)}
     >
-      <TabsList>
-        <TabsTrigger value="all">
-          All ({totalCount})
-        </TabsTrigger>
-        <TabsTrigger value="video">
-          Video ({videoCount})
-        </TabsTrigger>
-        <TabsTrigger value="audio">
-          Audio ({audioCount})
-        </TabsTrigger>
-      </TabsList>
+      <SegmentedControl
+        label="Filter formats"
+        layoutId="format-filter"
+        value={filter}
+        items={[
+          { value: "all", label: `All ${totalCount}` },
+          { value: "video", label: `Video ${videoCount}` },
+          { value: "audio", label: `Audio ${audioCount}` },
+        ]}
+      />
     </Tabs>
   );
 }

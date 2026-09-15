@@ -1,30 +1,30 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function AnalyzeLoadingSkeleton() {
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-3/4" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Skeleton className="aspect-video w-full shrink-0 rounded-md sm:w-64" />
-            <div className="flex flex-col gap-3">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-20" />
-            </div>
+    <div className="space-y-6" aria-hidden="true">
+      <div className="bg-card border-hairline floating flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row">
+        <Skeleton className="aspect-video w-full shrink-0 rounded-xl sm:w-56" />
+        <div className="flex flex-1 flex-col gap-3">
+          <Skeleton className="h-5 w-3/4" />
+          <div className="flex gap-4">
+            <Skeleton className="h-3.5 w-24" />
+            <Skeleton className="h-3.5 w-16" />
+            <Skeleton className="h-3.5 w-20" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-64" />
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-9 w-56 rounded-full" />
+        </div>
+        <div className="bg-card border-hairline floating space-y-1 rounded-2xl border p-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-10 w-full" />
+          ))}
+        </div>
       </div>
     </div>
   );

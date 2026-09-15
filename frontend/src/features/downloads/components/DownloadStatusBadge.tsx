@@ -2,14 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { getStatusLabel } from "../services/downloadService";
 import type { DownloadStatus } from "../types";
 
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+type BadgeVariant = "default" | "secondary" | "outline" | "success" | "destructive";
 
+/** Colour marks the outcome; everything still in flight stays neutral. */
 const STATUS_VARIANTS: Record<DownloadStatus, BadgeVariant> = {
   queued: "outline",
-  downloading: "default",
-  processing: "default",
-  paused: "secondary",
-  completed: "secondary",
+  downloading: "secondary",
+  processing: "secondary",
+  paused: "outline",
+  completed: "success",
   failed: "destructive",
   cancelled: "outline",
 };

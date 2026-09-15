@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
+import { MotionConfig } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/shared/components/Header";
@@ -43,32 +44,36 @@ export default function App() {
       enableSystem
       disableTransitionOnChange
     >
-      <TooltipProvider>
-        <DownloadsProvider>
-          <div className="flex min-h-screen flex-col bg-background text-foreground">
-            {appState.status === "ready" ? (
-              // The tabs own the header so their triggers can sit in it.
-              <MainTabs searchKey={resetKey} onLogoClick={handleLogoClick} />
-            ) : (
-              <>
-                <Header onLogoClick={handleLogoClick} />
-                <main className="flex-1">
-                  {appState.status === "checking" && (
-                    <div className="flex items-center justify-center py-24">
-                      <p className="text-sm text-muted-foreground">
-                        Loading...
-                      </p>
-                    </div>
-                  )}
-                  {appState.status === "setup" && (
-                    <SetupScreen onComplete={handleSetupComplete} />
-                  )}
-                </main>
-              </>
-            )}
-          </div>
-        </DownloadsProvider>
-      </TooltipProvider>
+      {/* Every spring in the app degrades to a cross-fade when the user has
+          asked for reduced motion. */}
+      <MotionConfig reducedMotion="user">
+        <TooltipProvider>
+          <DownloadsProvider>
+            <div className="bg-background text-foreground flex min-h-screen flex-col">
+              {appState.status === "ready" ? (
+                // The tabs own the header so their triggers can sit in it.
+                <MainTabs searchKey={resetKey} onLogoClick={handleLogoClick} />
+              ) : (
+                <>
+                  <Header onLogoClick={handleLogoClick} />
+                  <main className="flex-1">
+                    {appState.status === "checking" && (
+                      <div className="flex items-center justify-center py-24">
+                        <p className="text-muted-foreground text-body">
+                          Loading…
+                        </p>
+                      </div>
+                    )}
+                    {appState.status === "setup" && (
+                      <SetupScreen onComplete={handleSetupComplete} />
+                    )}
+                  </main>
+                </>
+              )}
+            </div>
+          </DownloadsProvider>
+        </TooltipProvider>
+      </MotionConfig>
       <Toaster />
     </ThemeProvider>
   );
