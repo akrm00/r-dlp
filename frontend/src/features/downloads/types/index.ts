@@ -1,9 +1,15 @@
+import type {
+  AttemptProgress,
+  ExecutionContext,
+} from "@/shared/types/execution";
+
 /** Identifies one download run. Branded so it cannot be mixed up with other ids. */
 export type DownloadId = string & { readonly __brand: "DownloadId" };
 
 export type DownloadStatus =
   | "queued"
   | "downloading"
+  | "retrying"
   | "processing"
   | "paused"
   | "completed"
@@ -17,10 +23,13 @@ export type SettledStatus = Extract<
 >;
 
 /** Lifecycle stage reported by the backend while yt-dlp runs. */
-export type DownloadStage = "started" | "downloading" | "processing" | "finished";
+export type DownloadStage =
+  "started" | "retrying" | "downloading" | "processing" | "finished";
 
 /** Payload pushed by the `download_video` command through its progress channel. */
 export type DownloadProgressEvent = {
+  attempt: AttemptProgress | null;
+  executionContext: ExecutionContext | null;
   downloadId: string;
   stage: DownloadStage;
   downloadedBytes: number | null;
@@ -35,11 +44,14 @@ export type DownloadOutcome = "completed" | "cancelled" | "paused";
 
 /** Value the `download_video` command resolves with. */
 export type DownloadResult = {
+  executionContext: ExecutionContext | null;
   outcome: DownloadOutcome;
   path: string;
 };
 
 export type DownloadItem = {
+  attempt: AttemptProgress | null;
+  executionContext: ExecutionContext | null;
   id: DownloadId;
   url: string;
   formatId: string;
@@ -62,6 +74,7 @@ export type DownloadItem = {
 
 /** What a caller needs to provide to queue a download. */
 export type StartDownloadInput = {
+  executionContext: ExecutionContext | null;
   url: string;
   formatId: string;
   formatLabel: string;

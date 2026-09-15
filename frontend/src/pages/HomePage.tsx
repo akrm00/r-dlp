@@ -18,6 +18,7 @@ import {
 import { useDownloads } from "@/features/downloads";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { SPRING } from "@/shared/motion/springs";
+import { formatAttempt } from "@/shared/utils/execution";
 
 type HomePageProps = {
   /** Called once a download has been queued, so the shell can reveal it. */
@@ -42,11 +43,12 @@ export default function HomePage({ onDownloadQueued }: HomePageProps) {
     setPendingFormatId(formatId);
     try {
       const downloadId = await startDownload({
-        url: video.sourceUrl,
+        url: state.requestUrl,
         formatId,
         formatLabel: getFormatDescription(format),
         title: video.title,
         thumbnailUrl: video.thumbnailUrl,
+        executionContext: video.executionContext,
       });
 
       if (downloadId) {
@@ -78,6 +80,11 @@ export default function HomePage({ onDownloadQueued }: HomePageProps) {
       </section>
 
       {state.status === "loading" && <AnalyzeLoadingSkeleton />}
+      {state.status === "loading" && state.attempt && (
+        <p role="status" className="text-muted-foreground text-body">
+          {formatAttempt(state.attempt)}
+        </p>
+      )}
 
       {state.status === "error" && (
         <Alert variant="destructive">

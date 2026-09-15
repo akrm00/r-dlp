@@ -11,6 +11,7 @@ import {
 import { DownloadRowActions } from "./DownloadRowActions";
 import { DownloadStatusBadge } from "./DownloadStatusBadge";
 import type { DownloadItem } from "../types";
+import { formatAttempt } from "@/shared/utils/execution";
 
 /** Statuses with nothing left to show on a bar. */
 const NO_PROGRESS_BAR: readonly string[] = ["failed", "cancelled"];
@@ -93,6 +94,13 @@ type DownloadDetailsProps = {
 };
 
 function DownloadDetails({ item, queuePosition }: DownloadDetailsProps) {
+  if (item.status === "retrying" && item.attempt) {
+    return (
+      <p role="status" className="text-muted-foreground text-caption">
+        {formatAttempt(item.attempt)}
+      </p>
+    );
+  }
   if (item.status === "failed") {
     return (
       <p className="text-destructive text-caption">

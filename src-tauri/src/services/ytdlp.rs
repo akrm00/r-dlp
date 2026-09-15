@@ -1,8 +1,13 @@
-use crate::types::{to_video_info, VideoInfo, YtDlpInfoDTO};
-use anyhow::{bail, Context, Result};
+use crate::types::{to_video_info, DownloadFilename, VideoInfo, YtDlpInfoDTO};
+use anyhow::{Context, Result};
+use std::time::Duration;
 use tokio::process::Command;
 
-use super::ytdlp_setup;
+use super::{
+    execution::{execute, Attempt, AttemptProgress, ExecutionPlan},
+    request_error::RequestFailure,
+    runtime::capture,
+};
 
 /// Create a Command that hides the console window on Windows.
 pub(crate) fn create_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
@@ -12,95 +17,83 @@ pub(crate) fn create_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
     cmd
 }
 
-const ANALYZE_TIMEOUT_SECS: u64 = 30;
-
-/// Get the yt-dlp binary path: local app data binary first, then system PATH.
-pub(crate) fn get_binary_path() -> String {
-    if let Some(local_path) = ytdlp_setup::get_local_binary_path() {
-        if local_path.exists() {
-            return local_path.to_string_lossy().to_string();
-        }
-    }
-
-    if cfg!(windows) {
-        "yt-dlp.exe".to_string()
-    } else {
-        "yt-dlp".to_string()
-    }
+pub async fn analyze(
+    url: &str,
+    plan: &ExecutionPlan,
+    on_attempt: impl Fn(AttemptProgress),
+) -> Result<VideoInfo> {
+    let (mut info, context) = execute(
+        plan,
+        |context, attempt| {
+            on_attempt(AttemptProgress {
+                browser: context.browser.clone(),
+                attempt,
+            });
+        },
+        |attempt| async move {
+            let output = metadata_output(
+                &attempt,
+                &["--dump-json", "--no-warnings", "--no-playlist", "--", url],
+                Duration::from_secs(30),
+            )
+            .await?;
+            let dto: YtDlpInfoDTO =
+                serde_json::from_slice(&output).context("Failed to parse yt-dlp JSON output")?;
+            Ok(to_video_info(dto))
+        },
+    )
+    .await?;
+    info.execution_context = Some(context);
+    Ok(info)
 }
 
-pub async fn analyze(url: &str) -> Result<VideoInfo> {
-    let binary = get_binary_path();
-
-    let output = tokio::time::timeout(
-        std::time::Duration::from_secs(ANALYZE_TIMEOUT_SECS),
-        create_command(&binary)
-            .args(["--dump-json", "--no-warnings", "--no-playlist", url])
-            .output(),
+pub async fn get_filename(
+    url: &str,
+    format_id: &str,
+    plan: &ExecutionPlan,
+) -> Result<DownloadFilename> {
+    let (filename, execution_context) = execute(
+        plan,
+        |_, _| {},
+        |attempt| async move {
+            let output = metadata_output(
+                &attempt,
+                &[
+                    "--print",
+                    "filename",
+                    "-f",
+                    format_id,
+                    "--no-playlist",
+                    "--",
+                    url,
+                ],
+                Duration::from_secs(15),
+            )
+            .await?;
+            let filename = String::from_utf8_lossy(&output).trim().to_string();
+            Ok(if filename.is_empty() {
+                "download".into()
+            } else {
+                filename
+            })
+        },
     )
-    .await
-    .context("Analysis timed out after 30 seconds")?
-    .context("Failed to start yt-dlp. Make sure it is installed.")?;
+    .await?;
+    Ok(DownloadFilename {
+        filename,
+        execution_context,
+    })
+}
 
+async fn metadata_output(attempt: &Attempt, args: &[&str], timeout: Duration) -> Result<Vec<u8>> {
+    let mut command = attempt.runtime.command();
+    attempt.options.apply(&mut command);
+    command.args(args);
+    let output = capture(command, timeout).await?;
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let cleaned = clean_error_message(&stderr);
-        bail!("{}", cleaned);
+        return Err(RequestFailure::from_stderr(&String::from_utf8_lossy(&output.stderr)).into());
     }
-
-    let json_str =
-        String::from_utf8(output.stdout).context("Failed to parse yt-dlp output as UTF-8")?;
-
-    let dto: YtDlpInfoDTO =
-        serde_json::from_str(&json_str).context("Failed to parse yt-dlp JSON output")?;
-
-    Ok(to_video_info(dto))
-}
-
-pub async fn get_filename(url: &str, format_id: &str) -> Result<String> {
-    let binary = get_binary_path();
-
-    let output = tokio::time::timeout(
-        std::time::Duration::from_secs(15),
-        create_command(&binary)
-            .args([
-                "--print",
-                "filename",
-                "-f",
-                format_id,
-                "--no-playlist",
-                url,
-            ])
-            .output(),
-    )
-    .await??;
-
-    if output.status.success() {
-        let filename = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        if !filename.is_empty() {
-            return Ok(filename);
-        }
-    }
-
-    Ok("download".to_string())
-}
-
-pub async fn get_version() -> Result<String> {
-    let binary = get_binary_path();
-
-    let output = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        create_command(&binary).arg("--version").output(),
-    )
-    .await
-    .context("Version check timed out")?
-    .context("Failed to run yt-dlp")?;
-
-    if !output.status.success() {
-        bail!("Failed to get yt-dlp version");
-    }
-
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    Ok(output.stdout)
 }
 
 /// Turn yt-dlp's stderr into a short, user-facing message.
@@ -108,7 +101,7 @@ pub(crate) fn clean_error_message(stderr: &str) -> String {
     if stderr.contains("Unsupported URL") {
         return "This URL is not supported. Please check the URL and try again.".to_string();
     }
-    if stderr.contains("Video unavailable") || stderr.contains("not available") {
+    if stderr.contains("Video unavailable") || stderr.contains("has been removed") {
         return "This video is unavailable or has been removed.".to_string();
     }
     if stderr.contains("Private video") {
@@ -120,6 +113,7 @@ pub(crate) fn clean_error_message(stderr: &str) -> String {
 
     stderr
         .lines()
+        .rev()
         .find(|line| line.starts_with("ERROR:"))
         .map(|line| line.trim_start_matches("ERROR:").trim().to_string())
         .unwrap_or_else(|| {

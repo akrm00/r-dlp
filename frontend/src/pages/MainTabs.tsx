@@ -7,6 +7,7 @@ import { SegmentedControl } from "@/shared/components/SegmentedControl";
 import { PANEL_SLIDE_PX, SPRING } from "@/shared/motion/springs";
 import { DownloadsPanel, useDownloads } from "@/features/downloads";
 import HomePage from "./HomePage";
+import { SettingsButton } from "@/features/settings";
 
 type MainTab = "analyze" | "download";
 
@@ -33,6 +34,7 @@ export function MainTabs({ searchKey, onLogoClick }: MainTabsProps) {
     >
       <Header
         onLogoClick={onLogoClick}
+        actions={<SettingsButton />}
         nav={
           <SegmentedControl
             label="Sections"
@@ -60,7 +62,10 @@ export function MainTabs({ searchKey, onLogoClick }: MainTabsProps) {
 
       <main className="relative flex-1">
         <TabPanel value="analyze" activeTab={tab}>
-          <HomePage key={searchKey} onDownloadQueued={() => setTab("download")} />
+          <HomePage
+            key={searchKey}
+            onDownloadQueued={() => setTab("download")}
+          />
         </TabPanel>
 
         <TabPanel value="download" activeTab={tab}>

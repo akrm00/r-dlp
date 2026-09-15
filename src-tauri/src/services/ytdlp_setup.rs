@@ -18,43 +18,10 @@ pub fn get_local_binary_path() -> Option<PathBuf> {
     get_install_dir().map(|d| d.join(binary_name))
 }
 
-/// Check if yt-dlp is available (locally installed or in system PATH).
-pub async fn check_installed() -> (bool, Option<String>, Option<String>) {
-    // Check local binary first
-    if let Some(local_path) = get_local_binary_path() {
-        if local_path.exists() {
-            if let Ok(version) = get_version_at(&local_path).await {
-                return (
-                    true,
-                    Some(version),
-                    Some(local_path.to_string_lossy().to_string()),
-                );
-            }
-        }
-    }
-
-    // Check system PATH
-    let system_binary = if cfg!(windows) {
-        "yt-dlp.exe"
-    } else {
-        "yt-dlp"
-    };
-
-    if let Ok(output) = create_command(system_binary).arg("--version").output().await {
-        if output.status.success() {
-            let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            return (true, Some(version), Some(system_binary.to_string()));
-        }
-    }
-
-    (false, None, None)
-}
-
 /// Download and install yt-dlp binary from GitHub releases.
 pub async fn install() -> Result<String> {
     let install_dir = get_install_dir().context("Could not determine app data directory")?;
-    std::fs::create_dir_all(&install_dir)
-        .context("Failed to create installation directory")?;
+    std::fs::create_dir_all(&install_dir).context("Failed to create installation directory")?;
 
     let binary_path = get_local_binary_path().context("Could not determine binary path")?;
 
@@ -65,10 +32,7 @@ pub async fn install() -> Result<String> {
         .context("Failed to download yt-dlp")?;
 
     if !response.status().is_success() {
-        bail!(
-            "Download failed with status: {}",
-            response.status()
-        );
+        bail!("Download failed with status: {}", response.status());
     }
 
     let bytes = response

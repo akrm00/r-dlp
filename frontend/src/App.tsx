@@ -9,11 +9,10 @@ import { DownloadsProvider } from "@/features/downloads";
 import { MainTabs } from "@/pages/MainTabs";
 import { invokeCommand } from "@/shared/lib/tauriClient";
 import type { YtdlpStatus } from "@/features/setup/types";
+import { SettingsButton } from "@/features/settings";
 
 type AppState =
-  | { status: "checking" }
-  | { status: "setup" }
-  | { status: "ready" };
+  { status: "checking" } | { status: "setup" } | { status: "ready" };
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>({ status: "checking" });
@@ -55,7 +54,10 @@ export default function App() {
                 <MainTabs searchKey={resetKey} onLogoClick={handleLogoClick} />
               ) : (
                 <>
-                  <Header onLogoClick={handleLogoClick} />
+                  <Header
+                    onLogoClick={handleLogoClick}
+                    actions={<SettingsButton />}
+                  />
                   <main className="flex-1">
                     {appState.status === "checking" && (
                       <div className="flex items-center justify-center py-24">

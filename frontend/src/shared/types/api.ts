@@ -1,3 +1,5 @@
+import type { ExecutionContext } from "./execution";
+
 export type VideoFormat = {
   formatId: string;
   label: string;
@@ -16,6 +18,7 @@ export type VideoFormat = {
 };
 
 export type VideoInfo = {
+  executionContext: ExecutionContext | null;
   id: string;
   title: string;
   description: string | null;

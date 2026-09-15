@@ -1,4 +1,5 @@
 import { isActive } from "../services/downloadService";
+import type { ExecutionContext } from "@/shared/types/execution";
 import type {
   DownloadId,
   DownloadItem,
@@ -22,6 +23,7 @@ export type DownloadsAction =
       status: SettledStatus;
       errorMessage: string | null;
       at: number;
+      executionContext?: ExecutionContext | null;
     }
   | { type: "restart"; id: DownloadId; at: number }
   | { type: "remove"; id: DownloadId }
@@ -48,6 +50,8 @@ export function downloadsReducer(
         speedBytesPerSec: null,
         etaSeconds: null,
         completedAt: action.at,
+        attempt: null,
+        executionContext: action.executionContext ?? item.executionContext,
         downloadedBytes:
           action.status === "completed"
             ? (item.totalBytes ?? item.downloadedBytes)
@@ -58,6 +62,7 @@ export function downloadsReducer(
       return updateItem(state, action.id, (item) => ({
         ...item,
         status: "queued",
+        attempt: null,
         errorMessage: null,
         speedBytesPerSec: null,
         etaSeconds: null,
@@ -105,8 +110,16 @@ function applyProgress(
 
   // "started" only announces that a queue slot was taken; it carries no numbers,
   // and on a resume the previous ones are still the best thing to show.
-  if (progress.stage === "started") {
-    return { ...item, status: "downloading", errorMessage: null };
+  if (progress.stage === "started" || progress.stage === "retrying") {
+    return {
+      ...item,
+      status: progress.stage === "retrying" ? "retrying" : "downloading",
+      errorMessage: null,
+      speedBytesPerSec: null,
+      etaSeconds: null,
+      attempt: progress.attempt,
+      executionContext: progress.executionContext ?? item.executionContext,
+    };
   }
 
   const isTransferDone = progress.stage === "finished";
@@ -115,6 +128,8 @@ function applyProgress(
   return {
     ...item,
     status: progress.stage === "downloading" ? "downloading" : "processing",
+    executionContext: progress.executionContext ?? item.executionContext,
+    attempt: null,
     downloadedBytes: isTransferDone
       ? (totalBytes ?? progress.downloadedBytes)
       : progress.downloadedBytes,

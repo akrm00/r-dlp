@@ -4,7 +4,7 @@
 //! output so progress lines can be read as they are produced, and so the process can
 //! be killed when the user cancels or pauses.
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use std::path::Path;
 use std::process::Stdio;
 use std::time::Instant;
@@ -12,10 +12,9 @@ use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::sync::mpsc;
 
 use super::download_registry::{wait_for_stop, StopReason, StopReceiver};
-use super::progress_parser::{
-    parse_progress_line, DOWNLOAD_TEMPLATE, POSTPROCESS_TEMPLATE,
-};
-use super::ytdlp::{clean_error_message, create_command, get_binary_path};
+use super::execution::Attempt;
+use super::progress_parser::{parse_progress_line, DOWNLOAD_TEMPLATE, POSTPROCESS_TEMPLATE};
+use super::request_error::RequestFailure;
 use crate::types::{DownloadOutcome, DownloadProgress};
 
 /// Minimum delay between two progress updates pushed to the frontend. yt-dlp emits
@@ -33,6 +32,7 @@ enum Ended {
 /// Download `url` at `format_id` into `output_path`, reporting progress through
 /// `on_progress` until the process ends or `stop_rx` asks it to stop.
 pub async fn run_download(
+    attempt: &Attempt,
     url: &str,
     format_id: &str,
     output_path: &Path,
@@ -40,10 +40,22 @@ pub async fn run_download(
     stop_rx: &mut StopReceiver,
     on_progress: impl Fn(DownloadProgress) + Send + 'static,
 ) -> Result<DownloadOutcome> {
-    let binary = get_binary_path();
     let path_str = output_path.to_str().context("Invalid output path")?;
 
-    let mut child = create_command(&binary)
+    let stopped = *stop_rx.borrow();
+    if let Some(reason) = stopped {
+        if reason == StopReason::Cancel {
+            cleanup_partials(output_path);
+        }
+        return Ok(match reason {
+            StopReason::Cancel => DownloadOutcome::Cancelled,
+            StopReason::Pause => DownloadOutcome::Paused,
+        });
+    }
+
+    let mut command = attempt.runtime.command();
+    attempt.options.apply(&mut command);
+    let mut child = command
         .args([
             "-f",
             format_id,
@@ -57,6 +69,7 @@ pub async fn run_download(
             POSTPROCESS_TEMPLATE,
             "--no-warnings",
             "--no-playlist",
+            "--",
             url,
         ])
         .stdout(Stdio::piped())
@@ -65,8 +78,14 @@ pub async fn run_download(
         .spawn()
         .context("Failed to start yt-dlp download")?;
 
-    let stdout = child.stdout.take().context("Failed to capture yt-dlp output")?;
-    let stderr = child.stderr.take().context("Failed to capture yt-dlp errors")?;
+    let stdout = child
+        .stdout
+        .take()
+        .context("Failed to capture yt-dlp output")?;
+    let stderr = child
+        .stderr
+        .take()
+        .context("Failed to capture yt-dlp errors")?;
 
     let (progress_tx, progress_rx) = mpsc::unbounded_channel();
 
@@ -113,7 +132,7 @@ pub async fn run_download(
         Ended::Stopped(StopReason::Pause) => Ok(DownloadOutcome::Paused),
         Ended::Exited(status) => {
             if !status.success() {
-                bail!("{}", clean_error_message(&stderr_lines.join("\n")));
+                return Err(RequestFailure::from_stderr(&stderr_lines.join("\n")).into());
             }
             Ok(DownloadOutcome::Completed)
         }
@@ -144,9 +163,12 @@ where
             if progress_tx.send(progress).is_err() {
                 break;
             }
-        } else if keep_lines && kept.len() < MAX_ERROR_LINES {
+        } else if keep_lines {
             let trimmed = line.trim();
             if !trimmed.is_empty() {
+                if kept.len() == MAX_ERROR_LINES {
+                    kept.remove(0);
+                }
                 kept.push(trimmed.to_string());
             }
         }
@@ -213,6 +235,52 @@ fn is_partial_artifact(file_name: &str, target_name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stopped_between_attempts_never_starts_another_process() {
+        use super::super::{
+            download_registry::DownloadRegistry, execution::RequestOptions, runtime::Runtime,
+        };
+        let registry = DownloadRegistry::new();
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("video.mp4");
+        let partial = directory.path().join("video.mp4.part");
+        let attempt = Attempt {
+            runtime: Runtime {
+                id: "missing".into(),
+                label: "missing".into(),
+                program: "this-executable-must-not-start".into(),
+                prefix: vec![],
+                version: Some("test".into()),
+                browsers: vec!["chrome".into()],
+                error: None,
+            },
+            options: RequestOptions {
+                browser: Some("chrome".into()),
+            },
+        };
+        for (reason, expected) in [
+            (StopReason::Pause, DownloadOutcome::Paused),
+            (StopReason::Cancel, DownloadOutcome::Cancelled),
+        ] {
+            std::fs::write(&partial, b"partial content").unwrap();
+            let mut stop_rx = registry.register("test").await;
+            registry.stop("test", reason).await;
+            let outcome = run_download(
+                &attempt,
+                "https://example.com",
+                "123",
+                &path,
+                "test",
+                &mut stop_rx,
+                |_| {},
+            )
+            .await
+            .unwrap();
+            assert_eq!(outcome, expected);
+            assert_eq!(partial.exists(), reason == StopReason::Pause);
+        }
+    }
 
     #[test]
     fn recognises_yt_dlp_partial_artifacts() {

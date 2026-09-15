@@ -49,6 +49,7 @@ export function DownloadsProvider({ children }: DownloadsProviderProps) {
           url: item.url,
           formatId: item.formatId,
           savePath: item.savePath,
+          executionContext: item.executionContext,
         },
         (progress) => dispatch({ type: "progress", id: item.id, progress }),
       );
@@ -57,6 +58,7 @@ export function DownloadsProvider({ children }: DownloadsProviderProps) {
         type: "settle",
         id: item.id,
         status: OUTCOME_STATUSES[result.outcome],
+        executionContext: result.executionContext,
         errorMessage: null,
         at: Date.now(),
       });
@@ -65,7 +67,10 @@ export function DownloadsProvider({ children }: DownloadsProviderProps) {
         notifyCompleted(result.path);
       }
     } catch (error) {
-      const message = getErrorMessage(error, "Download failed. Please try again.");
+      const message = getErrorMessage(
+        error,
+        "Download failed. Please try again.",
+      );
       dispatch({
         type: "settle",
         id: item.id,
@@ -80,18 +85,22 @@ export function DownloadsProvider({ children }: DownloadsProviderProps) {
   const startDownload = useCallback(
     async (input: StartDownloadInput) => {
       try {
-        const suggestedName = await getDownloadFilename(
+        const suggested = await getDownloadFilename(
           input.url,
           input.formatId,
+          input.executionContext,
         );
         const savePath = await save({
-          defaultPath: suggestedName,
+          defaultPath: suggested.filename,
           title: "Save download as",
         });
 
         if (!savePath) return null;
 
-        const item = createDownloadItem(input, savePath);
+        const item = createDownloadItem(
+          { ...input, executionContext: suggested.executionContext },
+          savePath,
+        );
         dispatch({ type: "enqueue", item });
         // Deliberately not awaited: the caller only waits for the download to be
         // queued, which is what lets several of them run at once.

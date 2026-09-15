@@ -1,3 +1,4 @@
+use crate::services::execution::{AttemptProgress, ExecutionContext};
 use serde::{Deserialize, Serialize};
 
 // Domain models sent to the frontend (camelCase for JS interop)
@@ -24,6 +25,7 @@ pub struct VideoFormat {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoInfo {
+    pub execution_context: Option<ExecutionContext>,
     pub id: String,
     pub title: String,
     pub description: Option<String>,
@@ -53,6 +55,7 @@ pub struct YtdlpStatus {
 pub enum DownloadStage {
     /// A queue slot was acquired and yt-dlp is about to start.
     Started,
+    Retrying,
     /// Bytes are being transferred.
     Downloading,
     /// Transfer is done, yt-dlp is running post-processing (merge, remux).
@@ -64,6 +67,8 @@ pub enum DownloadStage {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadProgress {
+    pub attempt: Option<AttemptProgress>,
+    pub execution_context: Option<ExecutionContext>,
     pub download_id: String,
     pub stage: DownloadStage,
     pub downloaded_bytes: Option<u64>,
@@ -87,8 +92,16 @@ pub enum DownloadOutcome {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadResult {
+    pub execution_context: Option<ExecutionContext>,
     pub outcome: DownloadOutcome,
     pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadFilename {
+    pub filename: String,
+    pub execution_context: ExecutionContext,
 }
 
 // yt-dlp raw JSON DTOs (snake_case matching yt-dlp output)
@@ -173,6 +186,7 @@ pub fn to_video_info(dto: YtDlpInfoDTO) -> VideoInfo {
     });
 
     VideoInfo {
+        execution_context: None,
         id: dto.id,
         title: dto.title,
         description: dto.description,

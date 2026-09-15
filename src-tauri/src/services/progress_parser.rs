@@ -60,6 +60,8 @@ pub fn parse_progress_line(line: &str, download_id: &str) -> Option<DownloadProg
     };
 
     Some(DownloadProgress {
+        attempt: None,
+        execution_context: None,
         download_id: download_id.to_string(),
         stage,
         downloaded_bytes,
@@ -74,6 +76,8 @@ pub fn parse_progress_line(line: &str, download_id: &str) -> Option<DownloadProg
 /// A progress update carrying only a stage change (no numbers available).
 pub fn empty_progress(download_id: &str, stage: DownloadStage) -> DownloadProgress {
     DownloadProgress {
+        attempt: None,
+        execution_context: None,
         download_id: download_id.to_string(),
         stage,
         downloaded_bytes: None,
@@ -95,7 +99,10 @@ fn parse_field(raw: &str) -> Option<&str> {
 }
 
 fn parse_f64(raw: &str) -> Option<f64> {
-    parse_field(raw)?.parse::<f64>().ok().filter(|v| v.is_finite())
+    parse_field(raw)?
+        .parse::<f64>()
+        .ok()
+        .filter(|v| v.is_finite())
 }
 
 /// Byte counts are integers, but yt-dlp occasionally renders them as floats.
@@ -174,8 +181,7 @@ mod tests {
 
     #[test]
     fn maps_the_postprocess_line_to_the_processing_stage() {
-        let progress =
-            parse_progress_line("[rdlp-pp]started", ID).expect("line should parse");
+        let progress = parse_progress_line("[rdlp-pp]started", ID).expect("line should parse");
 
         assert_eq!(progress.stage, DownloadStage::Processing);
         assert_eq!(progress.downloaded_bytes, None);

@@ -11,9 +11,10 @@ type HeaderProps = {
   onLogoClick?: () => void;
   /** Section navigation, rendered next to the theme toggle. */
   nav?: ReactNode;
+  actions?: ReactNode;
 };
 
-export function Header({ onLogoClick, nav }: HeaderProps) {
+export function Header({ onLogoClick, nav, actions }: HeaderProps) {
   const { version, isLoading: isVersionLoading } = useYtdlpVersion();
   const isScrolled = useScrolled();
 
@@ -59,6 +60,7 @@ export function Header({ onLogoClick, nav }: HeaderProps) {
 
         <div className="flex items-center gap-2">
           {nav}
+          {actions}
           <ThemeToggle />
         </div>
       </div>

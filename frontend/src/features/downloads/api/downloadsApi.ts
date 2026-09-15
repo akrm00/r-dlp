@@ -1,12 +1,17 @@
 import { Channel } from "@tauri-apps/api/core";
 import { invokeCommand } from "@/shared/lib/tauriClient";
 import type {
+  DownloadFilename,
+  ExecutionContext,
+} from "@/shared/types/execution";
+import type {
   DownloadId,
   DownloadProgressEvent,
   DownloadResult,
 } from "../types";
 
 type RunDownloadInput = {
+  executionContext: ExecutionContext | null;
   downloadId: DownloadId;
   url: string;
   formatId: string;
@@ -16,8 +21,13 @@ type RunDownloadInput = {
 export function getDownloadFilename(
   url: string,
   formatId: string,
-): Promise<string> {
-  return invokeCommand<string>("get_download_filename", { url, formatId });
+  executionContext: ExecutionContext | null,
+): Promise<DownloadFilename> {
+  return invokeCommand<DownloadFilename>("get_download_filename", {
+    url,
+    formatId,
+    executionContext,
+  });
 }
 
 /**
@@ -39,6 +49,7 @@ export function runDownload(
     savePath: input.savePath,
     downloadId: input.downloadId,
     onProgress: progressChannel,
+    executionContext: input.executionContext,
   });
 }
 

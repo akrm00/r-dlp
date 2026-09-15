@@ -11,6 +11,7 @@ const EM_DASH = "—";
 const STATUS_LABELS: Record<DownloadStatus, string> = {
   queued: "Queued",
   downloading: "Downloading",
+  retrying: "Connecting",
   processing: "Processing",
   paused: "Paused",
   completed: "Completed",
@@ -20,6 +21,7 @@ const STATUS_LABELS: Record<DownloadStatus, string> = {
 
 /** Statuses that still occupy the user's attention (and the tab badge). */
 const ACTIVE_STATUSES: readonly DownloadStatus[] = [
+  "retrying",
   "queued",
   "downloading",
   "processing",
@@ -111,6 +113,7 @@ export function getQueuePosition(
 }
 
 const SUMMARY_ORDER: readonly DownloadStatus[] = [
+  "retrying",
   "downloading",
   "processing",
   "queued",
@@ -126,14 +129,19 @@ export function summarizeDownloads(items: DownloadItem[]): string {
 
   const parts = SUMMARY_ORDER.map((status) => {
     const count = items.filter((item) => item.status === status).length;
-    return count === 0 ? null : `${count} ${STATUS_LABELS[status].toLowerCase()}`;
+    return count === 0
+      ? null
+      : `${count} ${STATUS_LABELS[status].toLowerCase()}`;
   }).filter((part): part is string => part !== null);
 
   return `${parts.join(", ")}.`;
 }
 
 export function getFileName(path: string): string {
-  const separatorIndex = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  const separatorIndex = Math.max(
+    path.lastIndexOf("/"),
+    path.lastIndexOf("\\"),
+  );
   return separatorIndex === -1 ? path : path.slice(separatorIndex + 1);
 }
 
@@ -147,6 +155,8 @@ export function createDownloadItem(
   savePath: string,
 ): DownloadItem {
   return {
+    executionContext: input.executionContext,
+    attempt: null,
     id: crypto.randomUUID() as DownloadId,
     url: input.url,
     formatId: input.formatId,
