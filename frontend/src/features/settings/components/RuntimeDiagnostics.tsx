@@ -46,7 +46,7 @@ export function RuntimeDiagnostics({
         </Button>
       </div>
 
-      <details className="bg-surface-sunken border-hairline rounded-xl border px-3 py-2">
+      <details className="bg-muted/30 border-hairline rounded-xl border px-3 py-2">
         <summary className="cursor-pointer text-sm font-medium">
           Engine diagnostics
         </summary>

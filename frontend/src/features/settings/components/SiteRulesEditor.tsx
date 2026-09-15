@@ -55,7 +55,7 @@ export function SiteRulesEditor({
       </div>
 
       {sites.length === 0 && (
-        <p className="bg-surface-sunken text-muted-foreground rounded-xl px-4 py-3 text-sm">
+        <p className="bg-muted/30 text-muted-foreground rounded-xl px-4 py-3 text-sm">
           All sites currently use the global setting.
         </p>
       )}
@@ -67,11 +67,12 @@ export function SiteRulesEditor({
         return (
           <div
             key={site.clientId}
-            className="bg-surface-sunken border-hairline grid gap-3 rounded-xl border p-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+            className="bg-muted/30 border-hairline grid gap-3 rounded-xl border p-3 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]"
           >
             <div className="space-y-1.5">
               <Label htmlFor={domainId}>Site domain</Label>
               <Input
+                className="h-9 rounded-md bg-transparent px-3 text-sm dark:bg-input/30"
                 id={domainId}
                 value={site.domain}
                 aria-invalid={Boolean(errors[index])}
